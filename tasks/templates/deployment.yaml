@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.appName }}
+  labels:
+    app: {{ .Values.appName }}
+    {{- include "CoFloEnterprise.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app: {{ .Values.appName }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        app: {{ .Values.appName }}
+    spec:
+      serviceAccountName: {{ .Release.Namespace }}-{{ .Values.appName }}-sa
+      containers:
+        - name: {{ .Values.appName }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          ports:
+            {{- toYaml .Values.ports | nindent 12 }}
+          {{- with .Values.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if or .Values.env .Values.envRedis .Values.envLogging .Values.envElastic .Values.envDatabase .Values.envKeyVault .Values.envUnleash .Values.envServicebus .Values.envGraphAPI }}
+          env:
+            {{- with .Values.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+            {{- with .Values.envRedis }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+            {{- with .Values.envLogging }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+            {{- with .Values.envElastic }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+            {{- with .Values.envDatabase }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+            {{- with .Values.envKeyVault }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+            {{- with .Values.envUnleash }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+            {{- with .Values.envServicebus }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+            {{- with .Values.envJwt }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+            {{- with .Values.envGraphAPI }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- end }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with .Values.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
