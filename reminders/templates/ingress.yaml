@@ -1,0 +1,61 @@
+{{- if .Values.ingress.enabled -}}
+{{- $fullName := .Values.appName -}}
+{{- $svcPort := .Values.service.port -}}
+{{- if semverCompare ">=1.19-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: networking.k8s.io/v1
+{{- else if semverCompare ">=1.14-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: networking.k8s.io/v1beta1
+{{- else -}}
+apiVersion: extensions/v1beta1
+{{- end }}
+kind: Ingress
+metadata:
+  name: {{ $fullName }}-ingress
+  labels:
+    app: {{ .Values.appName }}
+    {{- include "CoFloEnterprise.labels" . | nindent 4 }}
+  annotations:
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.ingressClassName }}
+  rules:
+    {{- range .Values.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ .service_name }}
+                port:
+                  number: {{ .service_port }}
+          {{- end }}
+    {{- end }}
+---
+{{- if .Values.ingress_backend.enabled -}}
+apiVersion: policy.openservicemesh.io/v1alpha1
+kind: IngressBackend
+metadata:
+  name: {{ $fullName }}-ingress-backend
+spec:
+  backends:
+  - name: {{ $fullName }}-service
+    port:
+      number: {{ $svcPort }}
+      protocol: https
+    tls:
+      skipClientCertValidation: false
+  sources:
+  {{- range .Values.ingress_backend.sources }}
+  - kind: {{ .kind }}
+    name: {{ .name }}
+    {{- if .namespace }}
+    namespace: {{ .namespace }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- end }}

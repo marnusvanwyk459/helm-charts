@@ -1,0 +1,61 @@
+#Deployment
+
+appName: co-flo-reminders
+replicaCount: 1
+serviceAccount:
+  create: true
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+image:
+  repository: southafricanorthcoflodevacr.azurecr.io/co-flo-reminders
+  pullPolicy: Always
+  tag: 'cf-featurepdp-3831-ts-9568198'
+resources:
+  limits:
+    cpu: 1000m
+    memory: 128Mi
+  requests:
+    cpu: 25m
+    memory: 64Mi
+ports:
+  - containerPort: 8011
+envLogging: []
+envRedis: []
+envElastic: []
+envDatabase: []
+envKeyVault: []
+envUnleash: []
+envServicebus: []
+envJwt: []
+envGraphAPI: []
+env: []
+livenessProbe: {}
+readinessProbe: {}
+volumeMounts: []
+volumes: []
+tolerations: []
+#hpa
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+#Service
+service:
+  type: ClusterIP
+  port: 8011
+  podPort: 8011
+#Ingress
+ingress:
+  enabled: false
+  ingressClassName: internal-ingress
+  hosts:
+    - host: reminders.coflocloud.dev
+      paths:
+        - path: /
+          pathType: Prefix
+#Config Map
+configMap:
+  enabled: false
